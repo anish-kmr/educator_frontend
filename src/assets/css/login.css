@@ -1,0 +1,85 @@
+.form-group{
+
+    margin:0 auto;
+    margin-bottom: 3rem;
+    position: relative;
+}
+
+.form-group .input{
+    position: relative;
+    height: max-content;
+}
+.input .icon{
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    position: absolute;
+    width:40px;
+    height: 100%;
+    background-color:#002486;
+
+}
+.icon i{
+    position: absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    font-size: 1.5rem;
+    color:white;
+}
+.form-group input{
+    width: 100%;
+    padding:0.8rem 20px;
+    padding-left:5rem;
+    border-radius: 8px;
+    border:1px solid #a3a2a2d2;
+    /* margin-bottom: .8rem; */
+    font-size: 2rem;
+}
+.show-password{
+    position: absolute;
+    right:0;
+    top:50%;
+    transform:translateY(-50%);
+    width:40px;
+    z-index: 99;
+}
+.show-password i{
+    font-size: 2rem;
+    color: #707070;
+}
+.show-password i:hover{
+    cursor: pointer;
+    color: #3f3f3f;
+}
+.form-group input:focus{
+    outline: none;
+    border:2px solid rgba(49, 147, 238, 0.548)
+}
+.submit-btn{
+    text-align: center;
+    margin:2rem 0;
+}
+.btn{
+    width: 100%;
+    padding:.8rem 4rem;
+    font-size:1.8rem;
+    font-weight: bolder;
+    letter-spacing: .1rem;
+    background-color: #002486;
+    border:2px solid #002486;
+    color: #e2e1e1;
+    transition: .3s all;
+}
+.btn:hover{
+    background-color: #0d2c9c;
+
+    background-color: #0d2c9c;
+    border:2px solid #193dbe;
+    color:#ffffff;
+    cursor: pointer;
+}
+.multi-group{
+    display: grid;
+    grid-template-columns: 48% 48%;
+    gap: 1rem;
+}
