@@ -57,7 +57,7 @@
                     </div>
                 </form>
 
-                <signup v-else :account_type="account_type" :toggleVisibility="toggleVisibility"></signup>
+                <signup v-else :account_type="account_type" :toggleVisibility="toggleVisibility" @startLoading="isLoading=true" @stopLoading="isLoading=false"></signup>
 
                 <div class="break"  v-if="form_visible == 'login'">
                     <span class="or">OR</span>
@@ -144,7 +144,7 @@ export default {
                 .then(res=>{
                     console.log("res of faculty login ",res)
                     if(res.data.signedIn){
-                        localStorage.setItem('id',JSON.stringify(res.data.user))
+                        localStorage.setItem('user',JSON.stringify(res.data.user))
                         localStorage.setItem('role',"Student")
                         this.isLoading=false
                         this.$router.push('/dashboard')

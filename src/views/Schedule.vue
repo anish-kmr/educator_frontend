@@ -52,11 +52,12 @@
 <script>
 import Loading from '../components/Loading.vue'
 import Header from '../components/Header.vue'
+import { upload_schedule } from '../services/schedule'
 export default {
     data(){
         return {
             isLoading: false,
-            timings:["9:00-9:50","10:00-10:50","11:00-11:50","12:00-12:50","1:00-1:50","2:00-2:50","3:00-3:50","4:00-4:50"],
+            timings:["9:00-9:50","10:00-10:50","11:00-11:50","12:00-12:50","13:00-13:50","14:00-14:50","15:00-15:50","16:00-16:50"],
             schedule:{
                 "Monday":[],
                 "Tuesday":[],
@@ -76,23 +77,35 @@ export default {
     },
     methods: {
         save_schedule(ev){
-            this.isLoading = false
+            this.isLoading = true
             ev.preventDefault()
-            let schedule =[]
+            let schedules =[]
             for(let day in this.schedule) {
                 let lectures = this.schedule[day]
                 lectures.forEach(lecture =>{
                     console.log("lecture ",lecture)
                     if(lecture.subject == null || lecture.batch == null || lecture.year == null || lecture.time==null){
-                        this.loading = false
+                        this.isLoading = false
                         alert(`${lecture.day} has some unfilled values.Either Delete lecture or fill.`)
                         return false
                     }
-                    schedule.push(lecture)
+                    schedules.push(lecture)
                 })
             }
             //Ccall save schedule api
-            console.log("schedule",schedule)
+            console.log("schedule",schedules    )
+            let faculty = JSON.parse(localStorage.getItem('user')) 
+            upload_schedule(faculty.uid,faculty.displayName,schedules).then(res=>{
+                if(res.data.saved != schedules.length){
+                    alert(`${res.data.failed} Lectures were not saved. Please check schedules in dashboard  `)
+                }
+                this.isLoading = false
+                this.$router.push('/dashboard')
+            }).catch(err=>{
+                this.isLoading=false
+                console.log("error ",err)
+            })
+
 
 
         },
@@ -187,10 +200,10 @@ option{color:black;text-indent: 50%;}
 .subject textarea::placeholder{
     color:#dfdfdf
 }
-.batch,.year{
+/* .batch,.year{
     display: inline-block;
     width: 45%;
-}
+} */
 .add-lecture{
     background-color: #efefef;
     display: grid;
@@ -230,3 +243,5 @@ option{color:black;text-indent: 50%;}
     background-color: #002486;
 }
 </style>
+
+

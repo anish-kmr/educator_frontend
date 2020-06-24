@@ -121,7 +121,8 @@ export default {
     background-color: #707070;
     min-width: 150px;
     border-radius: 5px;
-    padding:.4rem; 
+    padding:.4rem;
+    z-index: 999;
 }
 .profile-dropdown::before{
     content:"";

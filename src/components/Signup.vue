@@ -60,7 +60,6 @@
                 <button class="btn" @click="create_account">Create Account</button>
             </div>
         </div>
-        <loading :isLoading="isLoading"/>
     </form>
 </template>
 
@@ -73,7 +72,6 @@ export default {
     props:['toggleVisibility','account_type'],
     data() {
         return {
-            isLoading: false,
             password_visible:false,
             signup:{
                 name:"",
@@ -87,7 +85,7 @@ export default {
     components:{'loading':Loading},
     methods: {
         create_account(ev){
-            this.isLoading = true
+            this.$emit('startLoading')
             ev.preventDefault();
             
             //Create account 
@@ -105,15 +103,16 @@ export default {
                 .then(res=>{
                     console.log("res is ",res)
                     if(res.data.created){
-                        localStorage.setItem("id",res.data.user.uid)
-                        localStorage.setItem("name",res.data.user.displayName)
+
+                        localStorage.setItem('user',JSON.stringify(res.data.user))
                         localStorage.setItem("role","Faculty")
-                        this.$router.push('/faculty/schedule')
+                        this.$router.push('/schedule')
                     }
-                    this.Loading = false
+                    
+                    this.$emit('stopLoading')
                 })
                 .catch(err=>{
-                        this.Loading=false
+                        this.$emit('stopLoading')
                 })
             }
             else if(this.account_type === "student"){
@@ -121,15 +120,14 @@ export default {
                 .then(res=>{
                     console.log("res of student",res)
                     if(res.created){
-                        localStorage.setItem("id",res.data.user.uid)
-                        localStorage.setItem("name",res.data.user.displayName)
+                        localStorage.setItem('user',JSON.stringify(res.data.user))
                         localStorage.setItem("role","Faculty")
                         this.$router.push('/dashboard')
                     }
-                    this.Loading = false
+                    this.$emit('stopLoading')
                 })
                 .catch(err=>{
-                    this.Loading = false
+                    this.$emit('stopLoading')
                 })
             }
 
