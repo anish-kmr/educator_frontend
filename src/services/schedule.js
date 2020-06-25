@@ -9,3 +9,9 @@ export const upload_schedule = (facultyId,facultyName,schedules)=>{
     }
     return axios.post(`${BASE_URL}/schedules`,payload)
 }
+
+export const get_faculty_schedules = async (facultyId)=>{
+    return axios.get(`${BASE_URL}/schedules/faculty/${facultyId}`)
+    
+    
+}

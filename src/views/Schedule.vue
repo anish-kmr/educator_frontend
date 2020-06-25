@@ -124,7 +124,7 @@ export default {
     overflow-y: auto;
 }
 .days{
-    height: 80vh;;
+    height: 78vh;;
     display: flex;
     flex-direction: row;
     justify-content: space-evenly;
@@ -200,10 +200,10 @@ option{color:black;text-indent: 50%;}
 .subject textarea::placeholder{
     color:#dfdfdf
 }
-/* .batch,.year{
+.batch,.year{
     display: inline-block;
     width: 45%;
-} */
+}
 .add-lecture{
     background-color: #efefef;
     display: grid;

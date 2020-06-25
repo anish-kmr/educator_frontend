@@ -4,6 +4,8 @@ import Router from 'vue-router'
 import HomePage from '../views/HomePage.vue'
 import Schedule from '../views/Schedule.vue'
 import Dashboard from '../views/Dashboard.vue'
+import LiveClass from '../views/LiveClass.vue'
+import StartClass from '../views/StartClass.vue'
 
 Vue.use(Router)
 
@@ -26,7 +28,18 @@ export default new Router({
     },
     {
       path: '/dashboard',
-      component: Dashboard
+      component: Dashboard,
+      children:[
+        {
+          path: '',
+          component:StartClass
+        },
+        {
+          path: 'class',
+          component:LiveClass
+          
+        }
+      ]
     }
 
   ]

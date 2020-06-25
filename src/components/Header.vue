@@ -69,10 +69,12 @@ export default {
 
 #header{
     position: relative;
-    min-height: 40px;
-    height: 6vh;
+    min-height: 5rem;
+    /* height: 6vh; */
     width: 100%;
-    border-bottom: 2px solid #e2e2e2;
+    /* border-bottom: 2px solid #e2e2e2; */
+    z-index: 2;
+    box-shadow: 0px 0px 4px #c3c2c2;
 }
 
 .nav{
@@ -113,7 +115,6 @@ export default {
 
 }
 .profile-dropdown{
-    transition: .3s all;
     position: absolute;
     top: 100%;
     right:0px;
