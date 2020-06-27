@@ -123,7 +123,7 @@ export default {
                     console.log("res of faculty login ",res)
                     if(res.data.signedIn){
                         localStorage.setItem('user',JSON.stringify(res.data.user))
-                        localStorage.setItem('role',"Faculty")
+                        localStorage.setItem('role',"faculty")
                         if(res.data.user.scheduleFilled){
                             this.isLoading = false
                             this.$router.push('/dashboard')
@@ -145,7 +145,7 @@ export default {
                     console.log("res of faculty login ",res)
                     if(res.data.signedIn){
                         localStorage.setItem('user',JSON.stringify(res.data.user))
-                        localStorage.setItem('role',"Student")
+                        localStorage.setItem('role',"student")
                         this.isLoading=false
                         this.$router.push('/dashboard')
                     }

@@ -51,13 +51,13 @@ export default {
 
     },
     async mounted() {
-        let faculty = JSON.parse(localStorage.getItem('user'))
-        console.log("faculty ",faculty)
-        let facultyId = faculty.uid
-        get_faculty_schedules(facultyId).then(res=>{
-            this.schedules = res.data.schedules
-            console.log("schedule",this.schedules)
-        })
+        // let faculty = JSON.parse(localStorage.getItem('user'))
+        // console.log("faculty ",faculty)
+        // let facultyId = faculty.uid
+        // get_faculty_schedules(facultyId).then(res=>{
+        //     this.schedules = res.data.schedules
+        //     console.log("schedule",this.schedules)
+        // })
     }
 
 }

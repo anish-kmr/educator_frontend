@@ -6,6 +6,7 @@ import Schedule from '../views/Schedule.vue'
 import Dashboard from '../views/Dashboard.vue'
 import LiveClass from '../views/LiveClass.vue'
 import StartClass from '../views/StartClass.vue'
+import AttendClass from '../views/AttendClass.vue'
 
 Vue.use(Router)
 
@@ -37,6 +38,11 @@ export default new Router({
         {
           path: 'class',
           component:LiveClass
+          
+        },
+        {
+          path: 'attend',
+          component:AttendClass
           
         }
       ]
