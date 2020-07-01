@@ -121,6 +121,26 @@ export const listen_audio_mute_event = (id,callback)=>{
     })
 }
 
-export const  test = ()=>{
-    return db.collection('test').doc('asdasdsad').set({name:"test"})
+export const  delete_room = async  id =>{
+    let promises = []
+    db.collection("Rooms").doc(id).collection("Participants").get().then(querySnapshot=>{
+        querySnapshot.forEach(doc=>{
+            db.collection("Rooms").doc(id).collection("Participants").doc(doc.id).collection("IceCandidates").get().then(querySnapshot=>{
+                querySnapshot.forEach(candidate=>{
+                    promises.push(db.collection("Rooms").doc(id).collection("Participants").doc(doc.id).collection("IceCandidates").doc(candidate.id).delete())
+                })
+            })
+            promises.push(db.collection("Rooms").doc(id).collection("Participants").doc(doc.id).delete())
+        })
+
+    })
+    db.collection("Rooms").doc(id).collection("hostIceCandidates").get().then(querySnapshot=>{
+        querySnapshot.forEach(doc=>{
+            promises.push(db.collection("Rooms").doc(id).collection("hostIceCandidates").doc(doc.id).delete())
+        })
+    })
+    promises.push(db.collection("Rooms").doc(id).delete())
+    Promise.all(promises).then(res=>{
+        console.log("All deleted",res)
+    }).catch(err=>console.log("Error",err))
 }

@@ -47,7 +47,7 @@
                        Open Materal
                    </div>
                </div>
-               <div class="option">
+               <div class="option" @click="end_lecture">
                    <div class="icon">
                         <i class="fas fa-sign-out-alt"></i>
                    </div>
@@ -69,7 +69,8 @@ import {
     participant_listener,
     add_participant_ice_candidate_listener,
     send_video_mute_event,
-    send_audio_mute_event
+    send_audio_mute_event,
+    delete_room
 } from '../services/video_calling'
 export default {
     data() {
@@ -258,6 +259,9 @@ export default {
                 send_audio_mute_event(this.faculty.uid,true)
             }
         },
+        async end_lecture(){
+            delete_room(this.faculty.uid)
+        }
        
     }
 }
