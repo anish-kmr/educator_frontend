@@ -1,7 +1,7 @@
 <template>
     <div class="container"> 
         <div class="faculty-area">
-            <div class="faculty-stream">
+            <div class="faculty-stream" :class="{novideo:novideo}">
                 <video :src-object.prop.camel="localStream" autoplay  :audio_muted="audio_muted"></video>
             </div>
             <div class="stream-controls">
@@ -21,7 +21,7 @@
                    </div>
                </div>
                
-               <div class="option" @click="audio_muted=!audio_muted">
+               <div class="option" @click="toggle_audio">
                    <div class="icon">
                        <i class="fa fa-microphone" aria-hidden="true"  v-if="!audio_muted"></i>
                        <i class="fa fa-microphone-slash" aria-hidden="true" v-else></i>
@@ -67,11 +67,14 @@ import {
     upload_faculty_ice_candidate,
     upload_offer,
     participant_listener,
-    add_participant_ice_candidate_listener
+    add_participant_ice_candidate_listener,
+    send_video_mute_event,
+    send_audio_mute_event
 } from '../services/video_calling'
 export default {
     data() {
         return{
+            novideo:true,
             pc:"",
             faculty:{},
             subject:"Maths",
@@ -85,6 +88,8 @@ export default {
             screenStream:"",
             connections:{},
             faculty_peer:"",
+            local_video_track:null,
+            local_audio_track:null,
             configuration : {
                 iceServers: [
                     {
@@ -108,6 +113,8 @@ export default {
         if(this.screen_share) await this.share_screen(this.audio_muted)
        console.log("testing")
         await create_room(this.faculty.uid,this.faculty.displayName,this.subject,this.batch,this.year,"9:00","9:50")   
+        send_video_mute_event(this.faculty.uid,this.video_muted&&this.screen_share)
+        send_audio_mute_event(this.faculty.uid,this.audio_muted)
 
         this.pc = await this.newPeerConnection()
         await this.add_participants_listener()
@@ -122,7 +129,7 @@ export default {
             return pc
         },
         async add_participant_ice_candidates(participantId,candidate){
-            console.log("adding remote ice candidates",candidate)
+            console.log("adding remote ice candidates")
             await this.connections[participantId].pc.addIceCandidate(new RTCIceCandidate(candidate));
         },
         async add_participants(participantId,data){
@@ -132,7 +139,7 @@ export default {
             this.connections[participantId].pc.addEventListener('track', event => {
                 console.log('Got remote track from ',participantId);
                 event.streams[0].getTracks().forEach(track => {
-                    console.log('Add a track to the remoteStream:', track);
+                    console.log('Add a track to the remoteStream:');
                     this.connections[participantId].remoteStream.addTrack(track);
                 });
             })
@@ -145,7 +152,6 @@ export default {
             console.log("Participant Added...")
         },
         async add_participants_listener(){
-            console.log("Adddi ng listerner")
             await participant_listener(this.faculty.uid,this.add_participants)
             
         },
@@ -161,7 +167,7 @@ export default {
                         console.log('Got final candidate!');
                         return;
                     }
-                    console.log('Got candidate: ',event.candidate.toJSON());
+                    console.log('Got candidate: ');
                     await upload_faculty_ice_candidate(this.faculty.uid,event.candidate.toJSON())
                 });
             }
@@ -174,6 +180,7 @@ export default {
             }
             else if(!this.video_muted){
                 this.localStream.getTracks().forEach(async track=>{
+                    this.local_video_track = this.localStream.getVideoTracks()[0]
                     await pc.addTrack(track,this.localStream)
                 })
             }
@@ -181,10 +188,11 @@ export default {
         async open_webcam(audio_muted){
             localStorage.setItem('video_muted',false)
             this.localStream = await navigator.mediaDevices.getUserMedia({video:true,audio:!audio_muted})
+            this.novideo = false
         },
         async share_screen(audio_muted){
             console.log("Sharing screem")
-            this.screenStream = await navigator.mediaDevices.getDisplayMedia({video:true,audio:!audio_muted})            
+            this.screenStream = await navigator.mediaDevices.getDisplayMedia({video:true,audio:!audio_muted})
         },
         close_webcam(){
 
@@ -197,21 +205,60 @@ export default {
             this.video_muted = !this.video_muted
             if (!this.video_muted){ 
                 let stream = await navigator.mediaDevices.getUserMedia({video:true,audio:!this.audio_muted})
-                this.localStream = stream.clone()
+                this.localStream.addTrack(this.local_video_track)
+                this.novideo = false
+                for(let pid in this.connections){
 
-                this.localStream.getTracks().forEach(track=>{
-                    console.log(track)
-                })
+                    this.connections[pid].pc.getSenders().forEach(sender=>{
+                        sender.replaceTrack(this.local_video_track)
+                    })
+                }
+                send_video_mute_event(this.faculty.uid,false)
             }
             else{
-                this.localStream.getTracks().forEach(track=>{
-                    if(track.kind == "video") track.stop()
-                })
-                this.localStream.getTracks().forEach(track=>{
-                    console.log(track)
-                })
+                this.local_video_track = this.localStream.getVideoTracks()[0]
+                this.localStream.removeTrack(this.local_video_track)
+                this.novideo = true
+                for(let pid in this.connections){
+                    this.connections[pid].pc.getSenders().forEach(sender=>{
+                        if(sender.track.kind =="video"){
+                            this.connections[pid].pc.removeTrack(sender)
+                            console.log("removed video track")
+                        }
+                    })
+                }
+                send_video_mute_event(this.faculty.uid,true)
             }
-         }
+        },
+        async toggle_audio(){
+            this.audio_muted = !this.audio_muted
+            if (!this.audio_muted){ 
+                let stream = await navigator.mediaDevices.getUserMedia({video:!this.video_muted,audio:true})
+                this.localStream.addTrack(this.local_audio_track)
+                for(let pid in this.connections){
+
+                    this.connections[pid].pc.getSenders().forEach(sender=>{
+                        sender.replaceTrack(this.local_audio_track)
+                    })
+                }
+                send_audio_mute_event(this.faculty.uid,false)
+            }
+            else{
+                this.local_audio_track = this.localStream.getAudioTracks()[0]
+                this.localStream.removeTrack(this.local_audio_track)
+
+                for(let pid in this.connections){
+                    this.connections[pid].pc.getSenders().forEach(sender=>{
+                        if(sender.track.kind =="audio"){
+                            this.connections[pid].pc.removeTrack(sender)
+                            console.log("removed audio track")
+                        }
+                    })
+                }
+                send_audio_mute_event(this.faculty.uid,true)
+            }
+        },
+       
     }
 }
 </script>
@@ -237,11 +284,13 @@ export default {
     object-fit: fill;
 }
 
+.novideo{background-color: #707070 !important;}
+.novideo video{display:none}
+
 .stream-controls  {
     position: absolute;
     bottom:0;
     left: 0;
-    height: 10%;
     width: 100%;
     transform: translateY(100%);
     display: flex;
@@ -252,7 +301,7 @@ export default {
 }
 .toggle-tray{
     position: absolute;
-    bottom: 99%;
+    bottom: 100%;
     left:50%;
     transform: translateX(-60%);
     padding:.25rem 1rem;
