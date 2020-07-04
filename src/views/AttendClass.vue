@@ -139,12 +139,12 @@ export default {
             })
         },
         async open_webcam(){
-            this.localStream = await navigator.mediaDevices.getUserMedia({video:true,audio:false})
+            this.localStream = await navigator.mediaDevices.getUserMedia({video:true,audio:true})
         },
         close_webcam(){
             this.localStream.getTracks().forEach(track=>{track.stop()})
             this.localStream = null
-        },
+        }
     }
 }
 </script>

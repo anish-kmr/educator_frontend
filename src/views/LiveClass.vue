@@ -1,5 +1,6 @@
 <template>
     <div class="container"> 
+                
         <div class="faculty-area">
             <div class="faculty-stream" :class="{novideo:novideo}">
                 <video :src-object.prop.camel="localStream" autoplay  :audio_muted="audio_muted"></video>
@@ -8,8 +9,8 @@
                 <div class="toggle-tray">
                    <div class="icon">
                        <i class="fas fa-chevron-up"></i>
-                   </div>
                </div>
+                   </div>
                <div class="option" @click="toggle_video">
                    <div class="icon">
                        <i class="fas fa-video" v-if="!video_muted"></i>
@@ -31,7 +32,7 @@
                        <template v-else> Unmute Audio </template>
                    </div>
                </div>
-               <div class="option">
+               <div class="option" @click="toggle_screen_share" >
                    <div class="icon">
                        <i class="fa fa-desktop" aria-hidden="true"></i>
                    </div>
@@ -39,15 +40,16 @@
                        Share Screen
                    </div>
                </div>
-               <div class="option">
+               <!-- <label class="option" @click="embed_material">
                    <div class="icon">
                        <i class="fas fa-file-pdf"></i>
                    </div>
                    <div class="text">
                        Open Materal
+                       <input type="file" style="display:none" id="source" @change="embed_material">
                    </div>
-               </div>
-               <div class="option" @click="end_lecture">
+               </label> -->
+               <div class="option end-lecture-option" @click="end_lecture">
                    <div class="icon">
                         <i class="fas fa-sign-out-alt"></i>
                    </div>
@@ -57,8 +59,26 @@
                </div>
             </div>
         </div>
-        <div class="student-area"></div>
         <div class="doubt-area"></div>
+
+        <div class="all-students" :class="{all_students_shown:all_students_shown}">
+            <div class="show-all-students" :class="{hidden:all_students_shown}"  @click="all_students_shown=!all_students_shown">
+                <div class="icon">
+                    <i class="fas fa-chevron-left"></i>
+                </div>
+            </div>
+            <div class="students-video">
+                <div class="student" v-for="(obj,id) in connections" :key="id">
+                    <div class="name">{{id}}</div>
+                    <video :src-object.prop.camel="obj.remoteStream" autoplay ></video>
+                </div>
+            </div>
+             <div class="hide-all-students" :class="{hidden:!all_students_shown}" @click="all_students_shown=!all_students_shown">
+                <div class="icon">
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 <script>
@@ -75,6 +95,9 @@ import {
 export default {
     data() {
         return{
+            material_src:"",
+            material_open:true,
+            all_students_shown:false,
             novideo:true,
             pc:"",
             faculty:{},
@@ -106,6 +129,7 @@ export default {
         }
     },
     async created() {
+            // this.open_webcam(true)
         this.faculty = JSON.parse(localStorage.getItem('user'))
         this.screen_share = JSON.parse(localStorage.getItem('screen_share'))
         this.video_muted = JSON.parse(localStorage.getItem('video_muted'))
@@ -196,16 +220,15 @@ export default {
             this.screenStream = await navigator.mediaDevices.getDisplayMedia({video:true,audio:!audio_muted})
         },
         close_webcam(){
-
-            localStorage.setItem('webcam',false)
             this.localStream.getTracks().forEach(track=>{track.stop()})
+            if(this.screen_share) this.screenStream.getTracks().forEach(track=>{track.stop()})
             this.localStream = null
+            this.screenStream = null
         },
 
         async toggle_video(){
             this.video_muted = !this.video_muted
             if (!this.video_muted){ 
-                let stream = await navigator.mediaDevices.getUserMedia({video:true,audio:!this.audio_muted})
                 this.localStream.addTrack(this.local_video_track)
                 this.novideo = false
                 for(let pid in this.connections){
@@ -234,7 +257,6 @@ export default {
         async toggle_audio(){
             this.audio_muted = !this.audio_muted
             if (!this.audio_muted){ 
-                let stream = await navigator.mediaDevices.getUserMedia({video:!this.video_muted,audio:true})
                 this.localStream.addTrack(this.local_audio_track)
                 for(let pid in this.connections){
 
@@ -259,8 +281,43 @@ export default {
                 send_audio_mute_event(this.faculty.uid,true)
             }
         },
+        async toggle_screen_share(){
+            this.screen_share = !this.screen_share
+            console.log("Sharing screen ? ",this.screen_share)
+            if(this.screen_share){
+                await this.share_screen(this.audio_muted)
+                console.log("Inside ",this.connections)
+                for(let pid in this.connections){
+                    this.connections[pid].pc.getSenders().forEach(sender=>{
+                        console.log("sender",sender)
+                        if(sender.track.kind == "video"){
+                            sender.replaceTrack(this.screenStream.getVideoTracks()[0])
+                        }
+                    })
+                }
+            
+            }
+            else{
+                for(let pid in this.connections){
+                    this.connections[pid].pc.getSenders().forEach(sender=>{
+                        if(sender.track.kind == "video"){
+                            sender.replaceTrack(this.local_video_track)
+                        }
+                    })
+                }
+            }
+        },
         async end_lecture(){
-            delete_room(this.faculty.uid)
+            let ended = await delete_room(this.faculty.uid)
+            this.local_video_track = null
+            this.local_audio_track = null
+            this.close_webcam()
+            for(let pid in this.connections){
+                this.connections[pid].remoteStream.getTracks().forEach(track=>{track.stop()})
+                this.connections[pid].pc.close()
+            }
+            console.log("conns",this.connections)
+            
         }
        
     }
@@ -271,6 +328,7 @@ export default {
     height: 100%;
     position: relative;
     overflow-y: hidden;
+    overflow-x: hidden ;
 }
 .faculty-area{
     width: 75%;
@@ -288,8 +346,8 @@ export default {
     object-fit: fill;
 }
 
-.novideo{background-color: #707070 !important;}
-.novideo video{display:none}
+/* .novideo{background-color: #707070 !important;} */
+/* .novideo video{display:none} */
 
 .stream-controls  {
     position: absolute;
@@ -319,7 +377,7 @@ export default {
     bottom:100%;
     left:0;
 }
-.toggle-tray i{
+.toggle-tray i,.show-all-students i,.hide-all-students i{
     font-size: 2rem !important;
     transition: .6s transform;
 }
@@ -350,15 +408,85 @@ export default {
     font-size: 1.6rem;
     
 }
+.end-lecture-option i,.end-lecture-option .text{
+    color:#da4242
+}
 .option:hover{
     cursor: pointer;
 }
-.student-area{
+.all-students{
     position: absolute;
-    bottom:10%;
-    right:0;
-    width:24%;
-    height:25%;
-    background-color: #ececec;
+    top:0;
+    left : 100%;
+    /* min-width: 30rem; */
+    max-width: 100%;
+    width: max-content;
+    height: 100%;
+    background-color: #242424f1;
+    transition: .7s transform ease-in-out;
+    padding:1rem  0rem;
+}
+.show-all-students,.hide-all-students{
+    position: absolute;
+    top:50%;
+    left:0;
+    padding: 1rem .25rem;
+    background-color: #002486a6 ;
+    transform: translate(-100%,-50%);
+}
+.hide-all-students{left:100%}
+.all_students_shown{
+    transition: transform .7s;
+    transform: translateX(-100%) !important;
+}
+
+.students-video{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+.student{
+    max-width:25rem;
+    position: relative;
+    margin:.5rem; 
+    /* outline: 2px solid red; */
+    /* background-color: #2163af; */
+}
+.student .name{
+    position: absolute;
+    bottom:0;
+    left:0;
+    background-color: #002486a6;
+    color:#ececec;
+    width: 100%;
+    text-align: center;
+    padding: .25rem 0;
+    font-size: 1.6rem;
+}
+.left i{
+    animation: .4s rotate_left forwards !important;
+}
+.right i {
+    /* transition: .4s transform; */
+    animation: .4s rotate_right  forwards !important;
+}
+.student video{
+    /* outline: 2px solid red; */
+    height: 100%;  
+    width: 100%;
+    object-fit: fill;   
+}
+
+.hidden{display: none !important;}
+
+@keyframes rotate_right{
+    from{transform:rotateY(0deg)}
+    to{transform:rotateY(180deg)}
+}
+@keyframes rotate_left{
+    from{transform:rotateY(180deg)}
+    to{transform:rotateY(0deg)}
 }
 </style>

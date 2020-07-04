@@ -140,7 +140,11 @@ export const  delete_room = async  id =>{
         })
     })
     promises.push(db.collection("Rooms").doc(id).delete())
-    Promise.all(promises).then(res=>{
+    return Promise.all(promises).then(res=>{
         console.log("All deleted",res)
-    }).catch(err=>console.log("Error",err))
+        return true
+    }).catch(err=>{
+        console.log("Error deleting",err)
+        return false
+    })
 }

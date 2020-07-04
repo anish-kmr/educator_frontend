@@ -105,7 +105,7 @@ export default {
                     if(res.data.created){
 
                         localStorage.setItem('user',JSON.stringify(res.data.user))
-                        localStorage.setItem("role","Faculty")
+                        localStorage.setItem("role","faculty")
                         this.$router.push('/schedule')
                     }
                     
@@ -121,7 +121,7 @@ export default {
                     console.log("res of student",res)
                     if(res.created){
                         localStorage.setItem('user',JSON.stringify(res.data.user))
-                        localStorage.setItem("role","Faculty")
+                        localStorage.setItem("role","student")
                         this.$router.push('/dashboard')
                     }
                     this.$emit('stopLoading')
