@@ -5,6 +5,9 @@
                 <video :src-object.prop.camel="remoteStream" autoplay ></video>
             </div>
         </div>
+        <div class="chat-box">
+            <chat-box :roomId="roomId" />
+        </div>
         <div class="student-area">
             <div class="student-stream">
                 <video :src-object.prop.camel="localStream" autoplay ></video>
@@ -13,6 +16,7 @@
     </div>
 </template>
 <script>
+import ChatBox from '../components/ChatBox.vue'
 import {
     get_offer,
     upload_participant,
@@ -21,9 +25,14 @@ import {
     listen_video_mute_event,
     listen_audio_mute_event
 } from '../services/video_calling'
+
+import { send_message,message_listener } from '../services/chat'
 export default {
     data(){
         return{
+            roomId:"",
+            conversation:[],
+            doubt_text:"",
             novideo:true,
             student:{},
             student_peer:null,
@@ -53,6 +62,16 @@ export default {
             },
         }
     },
+    components:{
+        'chat-box':ChatBox
+    },
+    filters:{
+        youfilter(name){
+            let student = JSON.parse(localStorage.getItem('user'))                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+            if(name == student.displayName) return "You"
+            else return name
+        }
+    },
     async created() {
         this.remoteStream.onremovetrack = (ev)=>{
             console.log("track removed")
@@ -66,9 +85,12 @@ export default {
         this.remoteStream.oninactive = (ev)=>{
             console.log("track inactive")
         }
-
+        this.roomId = this.lecture.facultyId
         this.student = JSON.parse(localStorage.getItem('user'))
         await this.open_webcam()
+        await message_listener(this.lecture.facultyId,this.update_conversation)
+        
+        
         this.student_peer = await new RTCPeerConnection(this.configuration)
         await this.add_track()
         let offer = await get_offer(this.lecture.facultyId)
@@ -81,8 +103,23 @@ export default {
         await this.student_peer.setLocalDescription(answer)
         await upload_participant(this.lecture.facultyId,this.student,answer)
         await add_faculty_ice_candidates_listener(this.lecture.facultyId,this.add_faculty_ice_candidates)
+
+        
     },
     methods: {
+        update_conversation(data){
+            console.log("conv data",data)
+            let doubt = data.val()
+            doubt.key = data.key 
+            this.conversation.push(doubt)
+        },
+        ask_doubt(){
+            if(this.doubt_text.trim() == "") alert("Message empty")
+            else{
+                send_message(this.lecture.facultyId,this.student.uid,this.student.displayName,this.doubt_text)
+                console.log("Sent doubt ",this.doubt_text)
+            }
+        },
         toggle_host_video(ismute){
             console.log("toggliong host video",ismute)
             if (ismute){
@@ -141,6 +178,7 @@ export default {
         async open_webcam(){
             this.localStream = await navigator.mediaDevices.getUserMedia({video:true,audio:true})
         },
+
         close_webcam(){
             this.localStream.getTracks().forEach(track=>{track.stop()})
             this.localStream = null
@@ -191,5 +229,14 @@ export default {
     width: 100%;
     object-fit: fill;
 }
+.chat-box{
+    position: absolute;
+    top:0;
+    right:.5rem;
+    z-index: 99999;
+    height: calc(70% - 2rem);
+    width: calc(25% - 1rem);
+}
+
 
 </style>

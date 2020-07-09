@@ -59,7 +59,9 @@
                </div>
             </div>
         </div>
-        <div class="doubt-area"></div>
+        <div class="chat-box">
+            <chat-box :roomId="this.faculty.uid" />
+        </div>
 
         <div class="all-students" :class="{all_students_shown:all_students_shown}">
             <div class="show-all-students" :class="{hidden:all_students_shown}"  @click="all_students_shown=!all_students_shown">
@@ -82,6 +84,7 @@
     </div>
 </template>
 <script>
+import ChatBox from '../components/ChatBox.vue'
 import { 
     create_room, 
     upload_faculty_ice_candidate,
@@ -128,6 +131,7 @@ export default {
 
         }
     },
+    components: { 'chat-box':ChatBox },
     async created() {
             // this.open_webcam(true)
         this.faculty = JSON.parse(localStorage.getItem('user'))
@@ -478,7 +482,13 @@ export default {
     width: 100%;
     object-fit: fill;   
 }
-
+.chat-box{
+    position: absolute;
+    top:0;
+    right:.5rem;
+    height: calc(100% - 1rem);
+    width: calc(25% - 1rem)
+}
 .hidden{display: none !important;}
 
 @keyframes rotate_right{
